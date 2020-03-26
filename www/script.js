@@ -239,6 +239,34 @@ $(document).ready(function () {
     changePlayerHandSize(msg.playerName,+1)
     removeTopCard();
   }
+  socket.on("player was given card",playerWasGivenCard);
+  function playerWasGivenCard(msg) {
+    logEvent(msg.playerName+" was given a card")
+    changePlayerHandSize(msg.playerName,+1)
+  }
+  socket.on("player drew card",playerDrewCard);
+  function playerDrewCard(msg) {
+    logEvent(msg.playerName+" drew a card")
+    changePlayerHandSize(msg.playerName,+1)
+  }
+  socket.on("player was given back card",playerWasGivenBackCard);
+  function playerWasGivenBackCard(msg) {
+    logEvent(msg.playerName+" was given back the card "+formatCard(msg.card))
+    changePlayerHandSize(msg.playerName,+1)
+    removeTopCard();
+  }
+  socket.on("player took back card",playerTookBackCard);
+  function playerTookBackCard(msg) {
+    logEvent(msg.playerName+" took back "+formatCard(msg.card))
+    changePlayerHandSize(msg.playerName,+1)
+    removeTopCard();
+  }
+  socket.on("player played card",playerPlayedCard)
+  function playerPlayedCard(msg) {
+    appendCardToDiscard(msg.card)
+    changePlayerHandSize(msg.playerName,-1)
+    logEvent(msg.playerName+" played "+formatCard(msg.card))
+  }
   function removeTopCard() {
     $('#discard-area div.card:nth-last-child(1)').remove()
     $('#discard-area div.card:nth-last-child(1)').click(takeBackCard)

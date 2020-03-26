@@ -26,7 +26,7 @@ io.on('connection', function(socket){
     }
     console.log('player joining: '+playerName);
     game.addPlayer(playerName);
-    game.broadcast('new player joining', {playerName: playerName});
+    game.broadcast('player joined', {playerName: playerName});
     allocateSocket(socket,playerName);
   });
   socket.on('rejoin as existing player', function(playerName){
@@ -63,7 +63,7 @@ function allocateSocket(socket,playerName) {
   socket.on('draw card', function(){
     var card = game.drawCard(playerName);
     socket.emit('you drew card',{playerName:playerName,card:card})
-    game.broadcast('player drew card',{playerName:playerName})
+    socket.broadcast.emit('player drew card',{playerName:playerName})
     game.broadcastStates();
   })
   socket.on('give card', function(msg){
@@ -81,7 +81,7 @@ function allocateSocket(socket,playerName) {
     success = game.playCard(playerName,msg.card);
     if (success) {
       socket.emit('you played card',{playerName:playerName,card:msg.card});
-      game.broadcast('player played card',{playerName:playerName,card:msg.card});
+      socket.broadcast.emit('player played card',{playerName:playerName,card:msg.card});
       game.broadcastStates();
     } else {
       // TODO: Error Condition
@@ -92,7 +92,7 @@ function allocateSocket(socket,playerName) {
     card = game.takeBackCard(playerName);
     if (card !== false) {
       socket.emit('you took back card',{playerName:playerName,card:card})
-      game.broadcast('player took back card',{playerName:playerName,card:card})
+      socket.broadcast.emit('player took back card',{playerName:playerName,card:card})
       game.broadcastStates();
     } else {
       // TODO: Error Condition
