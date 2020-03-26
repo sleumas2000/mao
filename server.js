@@ -16,31 +16,31 @@ io.on('connection', function(socket){
   console.log('Socket connecting');
   console.log(unallocated_sockets.length+" unallocated socket(s) currently connected");
   socket.on('name query', function(msg){
-    console.log('name query: '+msg.name);
-    socket.emit('name query response', {name: msg.name, status: queryName(msg.name)});
+    console.log('name query: '+msg.playerName);
+    socket.emit('name query response', {playerName: msg.playerName, status: queryName(msg.playerName)});
   });
-  socket.on('join as new player', function(name){
-    if (queryName(name) !== "unused") {
-      console.log("A socket attempted to create "+name+" as a new player, when that player already exists");
+  socket.on('join as new player', function(playerName){
+    if (queryName(playerName) !== "unused") {
+      console.log("A socket attempted to create "+playerName+" as a new player, when that player already exists");
       return;
     }
-    console.log('player joining: '+name);
-    game.addPlayer(name);
-    game.broadcast('new player joining', {name: name});
-    allocateSocket(socket,name);
+    console.log('player joining: '+playerName);
+    game.addPlayer(playerName);
+    game.broadcast('new player joining', {playerName: playerName});
+    allocateSocket(socket,playerName);
   });
-  socket.on('rejoin as existing player', function(name){
-    if (queryName(name) !== "disconnected") {
-      if (queryName(name) == "active") {
-        console.log("A socket attempted to reconnect as "+name+", but that player is already connected");
+  socket.on('rejoin as existing player', function(playerName){
+    if (queryName(playerName) !== "disconnected") {
+      if (queryName(playerName) == "active") {
+        console.log("A socket attempted to reconnect as "+playerName+", but that player is already connected");
       } else {
-        console.log("A socket attempted to reconnect as "+name+", but that player does not exist");
+        console.log("A socket attempted to reconnect as "+playerName+", but that player does not exist");
       }
       return;
     }
-    console.log('player rejoining: '+name);
-    game.broadcast('player reconnected', {name: name});
-    allocateSocket(socket,name);
+    console.log('player rejoining: '+playerName);
+    game.broadcast('player reconnected', {playerName: playerName});
+    allocateSocket(socket,playerName);
   });
   socket.on('disconnect', function() {
     console.log("Unallocated socket disconnecting");
@@ -49,34 +49,34 @@ io.on('connection', function(socket){
   });
 });
 
-function allocateSocket(socket,name) {
+function allocateSocket(socket,playerName) {
   unallocated_sockets.splice(unallocated_sockets.indexOf(socket),1);
-  game.players[name].connected = true;
-  game.players[name].socket = socket
+  game.players[playerName].connected = true;
+  game.players[playerName].socket = socket
   game.broadcastStates();
   socket.on('disconnect', function(){
-    console.log('player lost connection: '+name);
-    game.players[name].connected = false;
-    game.broadcast('player disconnected', {name: name});
+    console.log('player lost connection: '+playerName);
+    game.players[playerName].connected = false;
+    game.broadcast('player disconnected', {playerName: playerName});
     game.broadcastStates();
   });
   socket.on('draw card', function(){
-    var card = game.drawCard(name);
-    socket.emit('you drew card',{player:name,card:card})
-    game.broadcast('player drew card',{player:name})
+    var card = game.drawCard(playerName);
+    socket.emit('you drew card',{playerName:playerName,card:card})
+    game.broadcast('player drew card',{playerName:playerName})
     game.broadcastStates();
   })
   socket.on('give card', function(msg){
-    var card = game.drawCard(msg.player);
-    socket.emit('you were given card',{player:msg.player,card:card})
-    game.broadcast('player was given card',{player:msg.player})
+    var card = game.drawCard(msg.playerName);
+    socket.emit('you were given card',{playerName:msg.playerName,card:card})
+    game.broadcast('player was given card',{playerName:msg.playerName})
     game.broadcastStates();
   })
   socket.on('play card', function(msg){
-    success = game.playCard(name,msg.card);
+    success = game.playCard(playerName,msg.card);
     if (success) {
-      socket.emit('you played card',{player:name,card:msg.card});
-      game.broadcast('player played card',{player:name,card:msg.card});
+      socket.emit('you played card',{playerName:playerName,card:msg.card});
+      game.broadcast('player played card',{playerName:playerName,card:msg.card});
       game.broadcastStates();
     } else {
       // TODO: Error Condition
@@ -84,10 +84,10 @@ function allocateSocket(socket,name) {
   });
   socket.on('take back card', function(){
     console.log("Player taking back card");
-    card = game.takeBackCard(name);
+    card = game.takeBackCard(playerName);
     if (card !== false) {
-      socket.emit('you took back card',{player:name,card:card})
-      game.broadcast('player took back card',{player:name,card:card})
+      socket.emit('you took back card',{playerName:playerName,card:card})
+      game.broadcast('player took back card',{playerName:playerName,card:card})
       game.broadcastStates();
     } else {
       // TODO: Error Condition
@@ -95,10 +95,10 @@ function allocateSocket(socket,name) {
   })
   socket.on('give back card', function(msg){
     console.log("Player being given back card");
-    card = game.takeBackCard(msg.player);
+    card = game.takeBackCard(msg.playerName);
     if (card !== false) {
-      socket.emit('you were given back card',{player:msg.player,card:card})
-      game.broadcast('player was given back card',{player:msg.player,card:card})
+      socket.emit('you were given back card',{playerName:playerName,card:card})
+      game.broadcast('player was given back card',{playerName:playerName,card:card})
       game.broadcastStates();
     } else {
       // TODO: Error Condition
@@ -106,10 +106,10 @@ function allocateSocket(socket,name) {
   })
 }
 
-function queryName(name) {
+function queryName(playerName) {
   for (usedName in game.players) {
-    if (usedName == name) {
-      if (game.players[name].connected == true) return "active";
+    if (usedName == playerName) {
+      if (game.players[playerName].connected == true) return "active";
       else return "disconnected";
     }
   }
@@ -135,14 +135,14 @@ const emptyGame = {
     maxSize: 8,
     numDecks: 2
   },
-  addPlayer: function(name) {
-    this.players[name] = {
-      name: name,
+  addPlayer: function(playerName) {
+    this.players[playerName] = {
+      playerName: playerName,
       hand: [],
       connected: false,
     };
     for (var i=0; i < this.parameters.numStartingCards; i++) {
-      this.drawCard(name);
+      this.drawCard(playerName);
     }
   },
   drawCard: function(playerName) {
@@ -208,7 +208,7 @@ const emptyGame = {
     }
     for (var otherPlayerName in this.players) {
       state.players[otherPlayerName] = {
-        name: otherPlayerName,
+        playerName: otherPlayerName,
         connected: this.players[otherPlayerName].connected,
         handSize: this.players[otherPlayerName].hand.length,
       }

@@ -11,20 +11,20 @@ $(document).ready(function () {
 
   socket.on('connect', function(){
     $("#disconnected-alert").addClass("hidden");
-    if (game && game.player) {
-      socket.emit("rejoin as existing player",game.player)
+    if (game && game.playerName) {
+      socket.emit("rejoin as existing player",game.playerName)
     }
   })
   $("#disconnected-alert").click(reconnect)
   function reconnect() {
     console.log("reconnecting");
     $("#disconnected-alert").addClass("hidden")
-    socket.emit("name query", {name:game.player});
+    socket.emit("name query", {playerName:game.playerName});
   }
 
   function submitName() {
     var name = $("#name-field").val();
-    socket.emit("name query", {name:name});
+    socket.emit("name query", {playerName:name});
   }
   $("#name-join-button").click(submitName)
 
@@ -32,12 +32,12 @@ $(document).ready(function () {
     if (msg.status=="active") {
       $("#name-error-alert").removeClass("hidden").text("This name is already in use. Please try another");
     } else if (msg.status=="disconnected") {
-      logEvent("Rejoining game as player "+msg.name);
-      socket.emit("rejoin as existing player",msg.name)
+      logEvent("Rejoining game as player "+msg.playerName);
+      socket.emit("rejoin as existing player",msg.playerName)
       hideNamePrompt();
     } else if (msg.status=="unused") {
-      logEvent("Joining game as new player "+msg.name);
-      socket.emit("join as new player",msg.name)
+      logEvent("Joining game as new player "+msg.playerName);
+      socket.emit("join as new player",msg.playerName)
       hideNamePrompt();
     } else {
       console.log("ERROR");
@@ -60,10 +60,10 @@ $(document).ready(function () {
     var playersOK = (count == Object.keys(state.players).length);
     for (var i = 0; i < count; i++) {
       var card = $(`#players-list li:nth-child(${i+1})`);
-      var name = card.children("span.player-name").text();
+      var playerName = card.children("span.player-name").text();
       var connected = card.hasClass("connected");
       var handSize = parseInt(card.children("span.player-hand-size").children("span.number").text());
-      playersOK = playersOK && state.players[name].connected == connected && state.players[name].handSize == handSize;
+      playersOK = playersOK && state.players[playerName].connected == connected && state.players[playerName].handSize == handSize;
     }
     if (!playersOK) {
       $("#players-list li").remove()
@@ -128,7 +128,7 @@ $(document).ready(function () {
       .addClass("list-group-item")
       .addClass("player-card")
       .addClass(player.connected ? "connected" : "disconnected")
-      .html(`<span class="player-name">${player.name}</span><span class="player-hand-size"><span class="number">${player.handSize}</span> cards</span>`)
+      .html(`<span class="player-name">${player.playerName}</span><span class="player-hand-size"><span class="number">${player.handSize}</span> cards</span>`)
     );
   }
   function appendCardToDiscard(card) {
@@ -170,7 +170,7 @@ $(document).ready(function () {
   function playCard(value,element) {
     element.remove();
     appendCardToDiscard(value)
-    changePlayerHandSize(game.player,-1)
+    changePlayerHandSize(game.playerName,-1)
     socket.emit("play card",{card:value});
   }
   $('#deck-area').click(drawCard)
@@ -185,26 +185,26 @@ $(document).ready(function () {
   function youWereGivenCard(msg) {
     logEvent("You were given a card")
     appendCardToHand(msg.card)
-    changePlayerHandSize(msg.player,+1)
+    changePlayerHandSize(msg.playerName,+1)
   }
   socket.on("you drew card",youDrewCard);
   function youDrewCard(msg) {
     logEvent("You drew a card")
     appendCardToHand(msg.card)
-    changePlayerHandSize(msg.player,+1)
+    changePlayerHandSize(msg.playerName,+1)
   }
   socket.on("you were given back card",youWereGivenBackCard);
   function youWereGivenBackCard(msg) {
     logEvent("You were given back the card "+formatCard(msg.card))
     appendCardToHand(msg.card)
-    changePlayerHandSize(msg.player,+1)
+    changePlayerHandSize(msg.playerName,+1)
     removeTopCard();
   }
   socket.on("you took back card",youTookBackCard);
   function youTookBackCard(msg) {
     logEvent("You took back the card "+formatCard(msg.card))
     appendCardToHand(msg.card)
-    changePlayerHandSize(msg.player,+1)
+    changePlayerHandSize(msg.playerName,+1)
     removeTopCard();
   }
   function removeTopCard() {
@@ -218,8 +218,8 @@ $(document).ready(function () {
     var count = $("#players-list li").length;
     for (var i = 0; i < count; i++) {
       var card = $(`#players-list li:nth-child(${i+1})`);
-      var name = card.children("span.player-name").text();
-      if (name == playerName) {
+      var elementPlayerName = card.children("span.player-name").text();
+      if (elementPlayerName == playerName) {
         var handSize = parseInt(card.children("span.player-hand-size").children("span.number").text());
         card.children("span.player-hand-size").children("span.number").text(handSize + increment)
       }
@@ -230,12 +230,12 @@ $(document).ready(function () {
     return cardString.slice(0,1).replace("X","10") + cardString.slice(1,2).replace("S","♠").replace("C","♣").replace("D","♦").replace("H","♥");
   }
 
-  /*appendPlayer({name:"Sam", handSize:3, connected: true})
-  appendPlayer({name:"Kate", handSize:17, connected: false})
+  /*appendPlayer({playerName:"Sam", handSize:3, connected: true})
+  appendPlayer({playerName:"Kate", handSize:17, connected: false})
   handList = ["3H","AH","XC"]
   for (i of handList) { appendCardToHand(i)};
   discardList = ["6S","JC","9D","QC","2D","5S","4H","7C","8S","KD"]
   for (i of discardList) { appendCardToDiscard(i)}
-  onStateUpdate({hand:handList,discard:discardList,deckSize:144,players:{Sam:{name:"Sam", handSize:3, connected: true}, Kate:{name:"Kate", handSize:17, connected: false}}})*/
+  onStateUpdate({hand:handList,discard:discardList,deckSize:144,players:{Sam:{playerName:"Sam", handSize:3, connected: true}, Kate:{playerName:"Kate", handSize:17, connected: false}}})*/
 
 });
