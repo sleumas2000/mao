@@ -3,6 +3,10 @@
 var game = {}
 
 $(document).ready(function () {
+
+  var admin = new URLSearchParams(window.location.search).has('admin');
+  console.log(admin);
+
   var socket = io();
 
   socket.on('disconnect', function(){
@@ -130,7 +134,35 @@ $(document).ready(function () {
       .addClass(player.connected ? "connected" : "disconnected")
       .html(`<span class="player-name">${player.playerName}</span><span class="player-hand-size"><span class="number">${player.handSize}</span> cards</span>`)
     );
+    if (admin) {
+      var card = $('#players-list li:nth-last-child(1)')
+      card
+        .append($('<input type="button" value="K">').addClass("btn btn-sm btn-danger player-admin-button")
+        .click(function(){kickPromptPlayer(player.playerName,card)}))
+        .append($('<input type="button" value="D">').addClass("btn btn-sm btn-outline-warning player-admin-button")
+        .click(function(){giveCardToPlayer(player.playerName)}))
+        .append($('<input type="button" value="R">').addClass("btn btn-sm btn-outline-danger player-admin-button")
+        .click(function(){giveCardBackToPlayer(player.playerName)})
+      );
+    }
   }
+  function kickPromptPlayer(playerName,cardElement) {
+    if (cardElement.children(".kick-button").length == 1) {
+      cardElement.children(".kick-button").remove();
+    } else {
+      cardElement.append($('<input type="button" value="Kick?">').addClass("btn btn-sm btn-danger player-admin-button kick-button")
+      .click(function(){kickPlayer(playerName)}))
+    }
+  }
+  function kickPlayer(playerName) {
+    socket.emit("remove player",{playerName:playerName})
+  };
+  function giveCardToPlayer(playerName) {
+    socket.emit("give card",{targetName:playerName})
+  };
+  function giveCardBackToPlayer(playerName) {
+    socket.emit("give back card",{targetName:playerName})
+  };
   function appendCardToDiscard(card) {
     var number = card.slice(0,1).replace("X","10");
     var suit = card.slice(1,2).replace("S","♠").replace("C","♣").replace("D","♦").replace("H","♥");

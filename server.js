@@ -67,9 +67,14 @@ function allocateSocket(socket,playerName) {
     game.broadcastStates();
   })
   socket.on('give card', function(msg){
-    var card = game.drawCard(msg.playerName);
-    socket.emit('you were given card',{playerName:msg.playerName,card:card})
-    game.broadcast('player was given card',{playerName:msg.playerName})
+    var card = game.drawCard(msg.targetName);
+    var theirSocket = game.findSocketByPlayerName(msg.targetName)
+    if (theirSocket) {
+      theirSocket.emit('you were given card',{playerName:msg.targetName,card:card})
+      theirSocket.broadcast.emit('player was given card',{playerName:msg.targetName})
+    } else {
+      game.broadcast('player was given card',{playerName:msg.targetName})
+    }
     game.broadcastStates();
   })
   socket.on('play card', function(msg){
@@ -95,10 +100,15 @@ function allocateSocket(socket,playerName) {
   })
   socket.on('give back card', function(msg){
     console.log("Player being given back card");
-    card = game.takeBackCard(msg.playerName);
+    card = game.takeBackCard(msg.targetName);
+    var theirSocket = game.findSocketByPlayerName(msg.targetName)
     if (card !== false) {
-      socket.emit('you were given back card',{playerName:playerName,card:card})
-      game.broadcast('player was given back card',{playerName:playerName,card:card})
+      if (theirSocket) {
+        theirSocket.emit('you were given back card',{playerName:msg.targetName,card:card})
+        theirSocket.broadcast.emit('player was given back card',{playerName:msg.targetName,card:card})
+      } else {
+        game.broadcast('player was given back card',{playerName:msg.targetName,card:card})
+      }
       game.broadcastStates();
     } else {
       // TODO: Error Condition
@@ -222,6 +232,11 @@ const emptyGame = {
       }
     }
     console.log("Update sent");
+  },
+  findSocketByPlayerName: function(playerName) {
+    if (this.players[playerName].connected) {
+      return this.players[playerName].socket
+    } else return false;
   }
 }
 emptyGame.giveBackCard = emptyGame.takeBackCard
