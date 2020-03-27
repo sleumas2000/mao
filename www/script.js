@@ -5,7 +5,16 @@ var game = {}
 $(document).ready(function () {
 
   var admin = new URLSearchParams(window.location.search).has('admin');
-  console.log(admin);
+  if (admin) {
+    console.log("Showing admin buttons");
+    $("#new-game-button-container").removeClass("hidden");
+    $("#new-game-submit-button").click(newGame);
+    function newGame() {
+      var numDecks = parseInt($("#num-decks-field").val());
+      socket.emit("start new game",{numDecks:numDecks})
+    }
+    $(".card-button").removeClass("hidden");
+  }
 
   var socket = io();
 
@@ -28,7 +37,13 @@ $(document).ready(function () {
 
   function submitName() {
     var name = $("#name-field").val();
-    socket.emit("name query", {playerName:name});
+    if (name.length < 2) {
+      $("#name-error-alert").removeClass("hidden").text("This name is too short. Please try another");
+    } else if (name.length > 32) {
+      $("#name-error-alert").removeClass("hidden").text("This name is too long. Please try another");
+    } else {
+      socket.emit("name query", {playerName:name});
+    }
   }
   $("#name-join-button").click(submitName)
 
@@ -155,7 +170,7 @@ $(document).ready(function () {
     }
   }
   function kickPlayer(playerName) {
-    socket.emit("remove player",{playerName:playerName})
+    socket.emit("remove player",{targetName:playerName})
   };
   function giveCardToPlayer(playerName) {
     socket.emit("give card",{targetName:playerName})
@@ -198,7 +213,13 @@ $(document).ready(function () {
       .addClass("log-entry")
       .text(event)
     );
+    updateLogScroll();
   }
+  function updateLogScroll(){
+    var element = $("#console-area")[0];
+    element.scrollTop = element.scrollHeight;
+  }
+
   function playCard(value,element) {
     element.remove();
     appendCardToDiscard(value)
@@ -206,6 +227,45 @@ $(document).ready(function () {
     socket.emit("play card",{card:value});
   }
   $('#deck-area').click(drawCard)
+
+  $('#left-button').click(function(e) {
+    moveCardLeft()
+    e.stopPropagation();
+  });
+  $('#shuffle-button').click(function(e) {
+    shuffleDeck()
+    e.stopPropagation();
+  });
+  $('#right-button').click(function(e) {
+    moveCardRight()
+    e.stopPropagation();
+  });
+  function moveCardLeft(){
+    removeTopCard()
+    socket.emit("move card from discard to deck")
+  }
+  function shuffleDeck(){
+    socket.emit("shuffle deck")
+  }
+  function moveCardRight(){
+    socket.emit("move card from deck to discard")
+  }
+  socket.on("deck shuffled", function(){
+    logEvent("The deck was shuffled")
+  });
+  socket.on("card moved from deck to discard", function(msg){
+    appendCardToDiscard(msg.card);
+    logEvent(formatCard(msg.card)+" was moved from the deck to the discard pile")
+  });
+  socket.on("card moved from discard to deck", function(msg){
+    logEvent(formatCard(msg.card)+" was returned from the discard pile to the deck")
+  });
+  socket.on("discard shuffled into deck", function(){
+    logEvent("The discard pile was shuffled back into the deck")
+  });
+  socket.on("deck added", function(){
+    logEvent("An extra deck was added")
+  });
   socket.on("you played card",youPlayedCard)
   function youPlayedCard(msg) {
     logEvent("You played "+formatCard(msg.card))
@@ -266,6 +326,31 @@ $(document).ready(function () {
     appendCardToDiscard(msg.card)
     changePlayerHandSize(msg.playerName,-1)
     logEvent(msg.playerName+" played "+formatCard(msg.card))
+  }
+  socket.on("player removed",removePlayer)
+  function removePlayer(msg) {
+    logEvent(msg.playerName+" was removed from the game")
+    var count = $("#players-list li").length;
+    for (var i = 0; i < count; i++) {
+      var card = $(`#players-list li:nth-child(${i+1})`);
+      var playerName = card.children("span.player-name").text();
+      if (playerName == msg.playerName) {
+        card.remove();
+        return;
+      }
+    }
+  }
+  socket.on("player joined",playerJoined)
+  function playerJoined(msg) {
+    logEvent(msg.playerName+" joined the game")
+  }
+  socket.on("player disconnected",playerDisconnected)
+  function playerDisconnected(msg) {
+    logEvent(msg.playerName+" lost connection")
+  }
+  socket.on("player reconnected",playerReconnected)
+  function playerReconnected(msg) {
+    logEvent(msg.playerName+" reconnected")
   }
   function removeTopCard() {
     $('#discard-area div.card:nth-last-child(1)').remove()

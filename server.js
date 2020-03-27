@@ -114,6 +114,52 @@ function allocateSocket(socket,playerName) {
       // TODO: Error Condition
     }
   })
+  socket.on('shuffle deck', function(){
+    game.shuffleDeck();
+    console.log("Deck shuffled");
+    game.broadcast("deck shuffled")
+  })
+  socket.on('move card from deck to discard', function(){
+    if (game.deck.length > 0) {
+      var card = game.deck.pop()
+      game.discard.push(card)
+      game.broadcast("card moved from deck to discard",{card:card})
+      game.broadcastStates()
+    }
+  })
+  socket.on('move card from discard to deck', function(){
+    if (game.discard.length > 0) {
+      var card = game.discard.pop()
+      game.deck.push(card)
+      game.broadcast("card moved from discard to deck",{card:card})
+      game.broadcastStates()
+    }
+  })
+  socket.on('remove player', function(msg){
+    player = game.players[msg.targetName];
+    if (player.connected) {
+      player.socket.disconnect();
+    }
+    for (card of player.hand) {
+      game.deck.push(card);
+      game.shuffleDeck();
+    }
+    game.broadcast('player removed',{playerName:msg.targetName})
+    delete game.players[msg.targetName];
+    game.broadcastStates();
+  });
+  socket.on('start new game',function (msg){
+    game.broadcast('game ended')
+    for (playerName in game.players) {
+      game.players[playerName].socket.disconnect();
+      delete game.players[playerName].socket; // IDK if this is necessary, but it's good to collect your garbage
+      delete game.players[playerName];
+      console.log("deleting "+playerName);
+    }
+    console.log(game);
+    console.log(Object.getPrototypeOf(game));
+    game = newGame(msg);
+  })
 }
 
 function queryName(playerName) {
@@ -170,7 +216,7 @@ const emptyGame = {
         } else {
           this.deck = [...cardList];
           this.parameters.numDecks = this.parameters.numDecks + 1;
-          this.broadcast('extra deck added');
+          this.broadcast('deck added');
         }
         this.broadcast('discard shuffled into deck');
         this.shuffleDeck();
@@ -239,23 +285,30 @@ const emptyGame = {
     } else return false;
   }
 }
-emptyGame.giveBackCard = emptyGame.takeBackCard
+//emptyGame.giveBackCard = emptyGame.takeBackCard
 
-function newGame(numDecks,maxSize,numStartingCards,players) {
+function newGame(params) {
   game = Object.create(emptyGame)
-  game.parameters.maxSize = (maxSize === undefined) ? 8 : maxSize,
-  game.parameters.numDecks = (numDecks === undefined) ? 2 : numDecks
-  game.parameters.numStartingCards = (numStartingCards === undefined) ? 5 : numStartingCards
+  if (params) {
+    game.parameters.maxSize = (params.maxSize === undefined) ? 8 : params.maxSize,
+    game.parameters.numDecks = (params.numDecks === undefined) ? 2 : params.numDecks
+    game.parameters.numStartingCards = (params.numStartingCards === undefined) ? 5 : params.numStartingCards
+  }
 
-  if (players !== undefined) {
-    for (var p of players) {
-      game.addPlayer(p);
+  if (params.players !== undefined) {
+    console.log(params.players);
+    console.log("@");
+    for (var playerObject of params.players) {
+      game.addPlayer(playerObject);
     }
   }
   if (game.parameters.numDecks != 0) {
     game.deck = repeatArray(cardList,game.parameters.numDecks)
     game.shuffleDeck()
   }
+  game.discard = [...game.discard]
+  game.players = {...game.players}
+  game.parameters = {...game.parameters}
   return game;
 }
 // Helper functions
@@ -268,5 +321,4 @@ function repeatArray(arr, count) {
   return b;
 }
 
-// interesting
-var game = newGame(5/13)
+var game = newGame({numDecks:1})
