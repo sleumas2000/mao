@@ -1,3 +1,7 @@
+var server_port = process.env.OPENSHIFT_NODEJS_PORT || 3000
+var server_ip_address = process.env.OPENSHIFT_NODEJS_IP || 'localhost'
+
+
 var express = require('express');
 var app = express();
 //var app = require('morgan')();
@@ -172,8 +176,8 @@ function queryName(playerName) {
   return "unused";
 }
 
-http.listen(3000, function(){
-  console.log('listening on *:3000');
+http.listen(server_port, function(){
+  console.log('listening on '+server_ip_address+':'+server_port);
 });
 
 
