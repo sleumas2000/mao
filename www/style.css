@@ -117,6 +117,7 @@ h2 {
 #new-game-button-container {
   position: fixed;
   bottom: 2vmin;
+  width: calc(25vw - 2vmin);
 }
 #new-game-button input {
   text-align: right;
