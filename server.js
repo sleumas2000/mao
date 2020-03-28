@@ -297,8 +297,6 @@ function newGame(params) {
   }
 
   if (params.players !== undefined) {
-    console.log(params.players);
-    console.log("@");
     for (var playerObject of params.players) {
       game.addPlayer(playerObject);
     }
