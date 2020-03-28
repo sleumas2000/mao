@@ -12,7 +12,7 @@ $(document).ready(function () {
     $("#new-game-submit-button").click(newGame);
     function newGame() {
       var numDecks = parseInt($("#num-decks-field").val());
-      socket.emit("start new game",{numDecks:numDecks})
+      socket.emit("start new game",{numDecks:numDecks,password:password})
     }
     $(".card-button").removeClass("hidden");
   }
