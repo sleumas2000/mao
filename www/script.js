@@ -6,6 +6,7 @@ $(document).ready(function () {
 
   var admin = new URLSearchParams(window.location.search).has('admin');
   if (admin) {
+    var password = new URLSearchParams(window.location.search).get('admin');
     console.log("Showing admin buttons");
     $("#new-game-button-container").removeClass("hidden");
     $("#new-game-submit-button").click(newGame);
@@ -170,13 +171,13 @@ $(document).ready(function () {
     }
   }
   function kickPlayer(playerName) {
-    socket.emit("remove player",{targetName:playerName})
+    socket.emit("remove player",{targetName:playerName,password:password})
   };
   function giveCardToPlayer(playerName) {
-    socket.emit("give card",{targetName:playerName})
+    socket.emit("give card",{targetName:playerName,password:password})
   };
   function giveCardBackToPlayer(playerName) {
-    socket.emit("give back card",{targetName:playerName})
+    socket.emit("give back card",{targetName:playerName,password:password})
   };
   function appendCardToDiscard(card) {
     var number = card.slice(0,1).replace("X","10");
@@ -242,13 +243,13 @@ $(document).ready(function () {
   });
   function moveCardLeft(){
     removeTopCard()
-    socket.emit("move card from discard to deck")
+    socket.emit("move card from discard to deck",{password:password})
   }
   function shuffleDeck(){
-    socket.emit("shuffle deck")
+    socket.emit("shuffle deck",{password:password})
   }
   function moveCardRight(){
-    socket.emit("move card from deck to discard")
+    socket.emit("move card from deck to discard",{password:password})
   }
   socket.on("deck shuffled", function(){
     logEvent("The deck was shuffled")

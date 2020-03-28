@@ -1,6 +1,6 @@
 var server_port = process.env.OPENSHIFT_NODEJS_PORT || 8080
 var server_ip_address = process.env.OPENSHIFT_NODEJS_IP || 'localhost'
-
+var password = process.env.PASSWORD || ""
 
 var express = require('express');
 var app = express();
@@ -70,6 +70,7 @@ function allocateSocket(socket,playerName) {
     game.broadcastStates();
   })
   socket.on('give card', function(msg){
+    if (msg.password != password) return;
     var card = game.drawCard(msg.targetName);
     var theirSocket = game.findSocketByPlayerName(msg.targetName)
     if (theirSocket) {
@@ -102,6 +103,7 @@ function allocateSocket(socket,playerName) {
     }
   })
   socket.on('give back card', function(msg){
+    if (msg.password != password) return;
     console.log("Player being given back card");
     card = game.takeBackCard(msg.targetName);
     var theirSocket = game.findSocketByPlayerName(msg.targetName)
@@ -117,12 +119,14 @@ function allocateSocket(socket,playerName) {
       // TODO: Error Condition
     }
   })
-  socket.on('shuffle deck', function(){
+  socket.on('shuffle deck', function(msg){
+    if (msg.password != password) return;
     game.shuffleDeck();
     console.log("Deck shuffled");
     game.broadcast("deck shuffled")
   })
-  socket.on('move card from deck to discard', function(){
+  socket.on('move card from deck to discard', function(msg){
+    if (msg.password != password) return;
     if (game.deck.length > 0) {
       var card = game.deck.pop()
       game.discard.push(card)
@@ -130,7 +134,8 @@ function allocateSocket(socket,playerName) {
       game.broadcastStates()
     }
   })
-  socket.on('move card from discard to deck', function(){
+  socket.on('move card from discard to deck', function(msg){
+    if (msg.password != password) return;
     if (game.discard.length > 0) {
       var card = game.discard.pop()
       game.deck.push(card)
@@ -139,6 +144,7 @@ function allocateSocket(socket,playerName) {
     }
   })
   socket.on('remove player', function(msg){
+    if (msg.password != password) return;
     player = game.players[msg.targetName];
     if (player.connected) {
       player.socket.disconnect();
@@ -152,6 +158,7 @@ function allocateSocket(socket,playerName) {
     game.broadcastStates();
   });
   socket.on('start new game',function (msg){
+    if (msg.password != password) return;
     game.broadcast('game ended')
     for (playerName in game.players) {
       game.players[playerName].socket.disconnect();
