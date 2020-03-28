@@ -18,7 +18,6 @@ var unallocated_sockets = [];
 io.on('connection', function(socket){
   unallocated_sockets.push(socket)
   console.log('Socket connecting');
-  console.log(unallocated_sockets.length+" unallocated socket(s) currently connected");
   socket.on('name query', function(msg){
     console.log('name query: '+msg.playerName);
     socket.emit('name query response', {playerName: msg.playerName, status: queryName(msg.playerName)});
@@ -160,8 +159,6 @@ function allocateSocket(socket,playerName) {
       delete game.players[playerName];
       console.log("deleting "+playerName);
     }
-    console.log(game);
-    console.log(Object.getPrototypeOf(game));
     game = newGame(msg);
   })
 }
