@@ -14,11 +14,13 @@ $(document).ready(function () {
       socket.emit("start new game",{numDecks:numDecks})
     }
     $(".card-button").removeClass("hidden");
+    $("#players-sidebar").addClass("admin-padding")
   }
 
   var socket = io();
 
   socket.on('disconnect', function(){
+    $("#shade").removeClass("hidden");
     $("#disconnected-alert").removeClass("hidden")
   })
 
@@ -30,9 +32,11 @@ $(document).ready(function () {
   })
   $("#disconnected-alert").click(reconnect)
   function reconnect() {
-    console.log("reconnecting");
+    /*console.log("reconnecting");
+    $("#shade").addClass("hidden")
     $("#disconnected-alert").addClass("hidden")
-    socket.emit("name query", {playerName:game.playerName});
+    socket = io()
+    socket.emit("name query", {playerName:game.playerName});*/
   }
 
   function submitName() {
@@ -64,6 +68,7 @@ $(document).ready(function () {
   });
   function hideNamePrompt(){
     $("#shade").addClass("hidden");
+    $("#name-dialog").addClass("hidden");
   }
 
   socket.on('game state update', onStateUpdate);
@@ -146,6 +151,7 @@ $(document).ready(function () {
       .append($('<li>')
       .addClass("list-group-item")
       .addClass("player-card")
+      .addClass(player.playerName == game.playerName ? "this-player" : "other-player")
       .addClass(player.connected ? "connected" : "disconnected")
       .html(`<span class="player-name">${player.playerName}</span><span class="player-hand-size"><span class="number">${player.handSize}</span> cards</span>`)
     );
@@ -342,6 +348,7 @@ $(document).ready(function () {
   }
   socket.on("player joined",playerJoined)
   function playerJoined(msg) {
+    $("#shade").addClass("hidden");
     logEvent(msg.playerName+" joined the game")
   }
   socket.on("player disconnected",playerDisconnected)
@@ -350,7 +357,13 @@ $(document).ready(function () {
   }
   socket.on("player reconnected",playerReconnected)
   function playerReconnected(msg) {
+    $("#shade").addClass("hidden");
     logEvent(msg.playerName+" reconnected")
+  }
+  socket.on("game ended", gameEnded)
+  function gameEnded() {
+    $("#disconnected-alert").text("The game  has ended. Please refresh the page to join a new game").removeClass("hidden")
+    $("#shade").removeClass("hidden")
   }
   function removeTopCard() {
     $('#discard-area div.card:nth-last-child(1)').remove()

@@ -156,8 +156,6 @@ function allocateSocket(socket,playerName) {
       delete game.players[playerName];
       console.log("deleting "+playerName);
     }
-    console.log(game);
-    console.log(Object.getPrototypeOf(game));
     game = newGame(msg);
   })
 }
@@ -209,16 +207,18 @@ const emptyGame = {
       if (this.deck.length == 0) {
         if (this.discard.length >= 20) {
           this.deck = this.discard.splice(0,this.discard.length-10);
+          this.broadcast('discard shuffled into deck');
         } else if (this.discard.length >= 10) {
           this.deck = this.discard.splice(0,this.discard.length-5);
+          this.broadcast('discard shuffled into deck');
         } else if (this.discard.length >= 5) {
           this.deck = this.discard.splice(0,this.discard.length-1);
+          this.broadcast('discard shuffled into deck');
         } else {
           this.deck = [...cardList];
           this.parameters.numDecks = this.parameters.numDecks + 1;
           this.broadcast('deck added');
         }
-        this.broadcast('discard shuffled into deck');
         this.shuffleDeck();
         this.broadcastStates();
       }
@@ -272,7 +272,7 @@ const emptyGame = {
     for (var playerName in this.players) {
       if (this.players[playerName].connected) {
         state.hand = this.players[playerName].hand;
-        state.player = playerName;
+        state.playerName = playerName;
         state.createdOn = Date.now();
         this.players[playerName].socket.emit('game state update',state);
       }
