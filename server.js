@@ -1,3 +1,7 @@
+var server_port = process.env.OPENSHIFT_NODEJS_PORT || 8080
+var server_ip_address = process.env.OPENSHIFT_NODEJS_IP || 'localhost'
+var password = process.env.PASSWORD || ""
+
 var express = require('express');
 var app = express();
 //var app = require('morgan')();
@@ -14,7 +18,6 @@ var unallocated_sockets = [];
 io.on('connection', function(socket){
   unallocated_sockets.push(socket)
   console.log('Socket connecting');
-  console.log(unallocated_sockets.length+" unallocated socket(s) currently connected");
   socket.on('name query', function(msg){
     console.log('name query: '+msg.playerName);
     socket.emit('name query response', {playerName: msg.playerName, status: queryName(msg.playerName)});
@@ -67,6 +70,7 @@ function allocateSocket(socket,playerName) {
     game.broadcastStates();
   })
   socket.on('give card', function(msg){
+    if (msg.password != password) return;
     var card = game.drawCard(msg.targetName);
     var theirSocket = game.findSocketByPlayerName(msg.targetName)
     if (theirSocket) {
@@ -99,6 +103,7 @@ function allocateSocket(socket,playerName) {
     }
   })
   socket.on('give back card', function(msg){
+    if (msg.password != password) return;
     console.log("Player being given back card");
     card = game.takeBackCard(msg.targetName);
     var theirSocket = game.findSocketByPlayerName(msg.targetName)
@@ -114,12 +119,14 @@ function allocateSocket(socket,playerName) {
       // TODO: Error Condition
     }
   })
-  socket.on('shuffle deck', function(){
+  socket.on('shuffle deck', function(msg){
+    if (msg.password != password) return;
     game.shuffleDeck();
     console.log("Deck shuffled");
     game.broadcast("deck shuffled")
   })
-  socket.on('move card from deck to discard', function(){
+  socket.on('move card from deck to discard', function(msg){
+    if (msg.password != password) return;
     if (game.deck.length > 0) {
       var card = game.deck.pop()
       game.discard.push(card)
@@ -127,7 +134,8 @@ function allocateSocket(socket,playerName) {
       game.broadcastStates()
     }
   })
-  socket.on('move card from discard to deck', function(){
+  socket.on('move card from discard to deck', function(msg){
+    if (msg.password != password) return;
     if (game.discard.length > 0) {
       var card = game.discard.pop()
       game.deck.push(card)
@@ -136,6 +144,7 @@ function allocateSocket(socket,playerName) {
     }
   })
   socket.on('remove player', function(msg){
+    if (msg.password != password) return;
     player = game.players[msg.targetName];
     if (player.connected) {
       player.socket.disconnect();
@@ -149,6 +158,7 @@ function allocateSocket(socket,playerName) {
     game.broadcastStates();
   });
   socket.on('start new game',function (msg){
+    if (msg.password != password) return;
     game.broadcast('game ended')
     for (playerName in game.players) {
       game.players[playerName].socket.disconnect();
@@ -170,8 +180,8 @@ function queryName(playerName) {
   return "unused";
 }
 
-http.listen(3000, function(){
-  console.log('listening on *:3000');
+http.listen(server_port, function(){
+  console.log('listening on '+server_ip_address+':'+server_port);
 });
 
 
@@ -296,8 +306,6 @@ function newGame(params) {
   }
 
   if (params.players !== undefined) {
-    console.log(params.players);
-    console.log("@");
     for (var playerObject of params.players) {
       game.addPlayer(playerObject);
     }
