@@ -125,6 +125,10 @@ function allocateSocket(socket,playerName) {
     console.log("Deck shuffled");
     game.broadcast("deck shuffled")
   })
+  socket.on('chat message', function(msg){
+    console.log("Chat message: "+msg.playerName+": "+msg.message);
+    game.broadcast('chat message',msg)
+  })
   socket.on('move card from deck to discard', function(msg){
     if (msg.password != password) return;
     if (game.deck.length > 0) {

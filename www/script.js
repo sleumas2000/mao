@@ -226,6 +226,19 @@ $(document).ready(function () {
     var element = $("#console-area")[0];
     element.scrollTop = element.scrollHeight;
   }
+  function logChat(playerName,message) {
+    $("#chat-list")
+      .append($('<li>')
+      .addClass("chat-entry")
+      .append($('<span>').addClass("chat-player-name").text(playerName+": "))
+      .append($('<span>').addClass("chat-player-message").text(message))
+    );
+    updateChatScroll();
+  }
+  function updateChatScroll(){
+    var element = $("#chat-area")[0];
+    element.scrollTop = element.scrollHeight;
+  }
 
   function playCard(value,element) {
     element.remove();
@@ -273,6 +286,15 @@ $(document).ready(function () {
   socket.on("deck added", function(){
     logEvent("An extra deck was added")
   });
+  socket.on("chat message", function(msg) {
+    logChat(msg.playerName,msg.message)
+  })
+  function sendMessage() {
+    var message = $("#chat-field").val();
+    $("#chat-field").val("")
+    socket.emit("chat message",{playerName:game.playerName,message:message})
+  }
+  $("#chat-send-button").click(sendMessage)
   socket.on("you played card",youPlayedCard)
   function youPlayedCard(msg) {
     logEvent("You played "+formatCard(msg.card))

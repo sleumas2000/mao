@@ -69,8 +69,8 @@ li.player-card.this-player {
 h2 {
   text-align: center;
 }
-#console-area {
-  max-height: 50vh;
+#console-area, #chat-area {
+  max-height: 30vh;
   overflow-y: scroll;
   border-top-right-radius: .25rem;
   border-top-left-radius: .25rem;
@@ -78,24 +78,24 @@ h2 {
   /*border: 0.5px solid rgba(112,128,144,0.5);*/
   border: 1px solid rgba(0,0,0,.125)
 }
-#console-area::-webkit-scrollbar {
+#console-area::-webkit-scrollbar, #chat-area::-webkit-scrollbar  {
   display:none;
 }
-#console-list {
+#console-list, #chat-list {
   padding: 0px;
   margin: 0px;
   list-style-type: none;
   border-top-left-radius: .25rem;
   border-top-right-radius: .25rem;
 }
-#console-list li{
+#console-list li, #chat-list li{
   list-style-type: none;
   padding-left: 1em;
   padding-right: 1em;
   padding-top: 0.1em;
   padding-bottom: 0.1em;
 }
-#console-list li:nth-child(odd){
+#console-list li:nth-child(odd), #chat-list li:nth-child(odd){
   background-color: rgba(0,0,0,0.1);
 }
 #console-list li:nth-last-child(1) {
@@ -104,6 +104,12 @@ h2 {
     padding-bottom: 0.5rem;
     font-weight: bolder;
     border-bottom: 2px solid slategrey;
+}
+.chat-player-name {
+  font-weight: bold;
+}
+.chat-player-message {
+  font-style: italic;
 }
 
 #players-sidebar {
