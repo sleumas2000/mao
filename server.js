@@ -1,5 +1,6 @@
 var server_port = process.env.OPENSHIFT_NODEJS_PORT || 8080
 var server_ip_address = process.env.OPENSHIFT_NODEJS_IP || 'localhost'
+var game_title = process.env.GAME_TITLE || 'Online Mao'
 var password = process.env.PASSWORD || ""
 
 var express = require('express');
@@ -17,6 +18,7 @@ var unallocated_sockets = [];
 
 io.on('connection', function(socket){
   unallocated_sockets.push(socket)
+  socket.emit('game title', {gameTitle:game_title})
   console.log('Socket connecting');
   socket.on('name query', function(msg){
     console.log('name query: '+msg.playerName);

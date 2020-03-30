@@ -105,6 +105,10 @@ h2 {
     font-weight: bolder;
     border-bottom: 2px solid slategrey;
 }
+#chat-input>.form-control, #chat-input>.input-group-append>.btn {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
 .chat-player-name {
   font-weight: bold;
 }

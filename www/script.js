@@ -24,12 +24,16 @@ $(document).ready(function () {
     $("#shade").removeClass("hidden");
     $("#disconnected-alert").removeClass("hidden")
   })
+  socket.on('game title', function(msg) {
+    $(document).prop('title', msg.gameTitle);
+  })
 
   socket.on('connect', function(){
     $("#disconnected-alert").addClass("hidden");
     if (game && game.playerName) {
       socket.emit("rejoin as existing player",game.playerName)
     }
+    logChat("System","You are connected to chat")
   })
   $("#disconnected-alert").click(reconnect)
   function reconnect() {
