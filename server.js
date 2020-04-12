@@ -33,7 +33,8 @@ io.on('connection', function(socket){
     }
     console.log('player joining: '+playerName);
     game.addPlayer(playerName);
-    game.broadcast('player joined', {playerName: playerName});
+    socket.emit('you joined', {playerName: playerName});
+    socket.broadcast.emit('player joined', {playerName: playerName});
     allocateSocket(socket,playerName);
   });
   socket.on('rejoin as existing player', function(playerName){

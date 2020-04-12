@@ -386,7 +386,7 @@ jQuery(function(){
   }
   socket.on("player reconnected",playerReconnected)
   function playerReconnected(msg) {
-    $("#shade").addClass("hidden");
+    // $("#shade").addClass("hidden");
     logEvent(msg.playerName+" reconnected")
   }
   socket.on("game ended", gameEnded)
