@@ -1,20 +1,22 @@
-var server_port = process.env.OPENSHIFT_NODEJS_PORT || 8080
-var server_ip_address = process.env.OPENSHIFT_NODEJS_IP || 'localhost'
-var game_title = process.env.GAME_TITLE || 'Online Mao'
-var password = process.env.PASSWORD || ""
+const server_port = process.env.OPENSHIFT_NODEJS_PORT || 8080
+const server_ip_address = process.env.OPENSHIFT_NODEJS_IP || 'localhost'
+const game_title = process.env.GAME_TITLE || 'Online Mao'
+const password = process.env.PASSWORD || ""
 
-var express = require('express');
-var app = express();
-//var app = require('morgan')();
-var http = require('http').createServer(app);
-var io = require('socket.io')(http);
+const express = require('express');
+const app = express();
+//const app = require('morgan')();
+const http = require('http').createServer(app);
+const io = require('socket.io')(http);
+
+let game;
 
 app.get('/', function(req, res){
   res.sendFile(__dirname + '/www/index.html');
 });
 app.use('/', express.static('www'))
 
-var unallocated_sockets = [];
+let unallocated_sockets = [];
 
 io.on('connection', function(socket){
   unallocated_sockets.push(socket)
@@ -36,7 +38,7 @@ io.on('connection', function(socket){
   });
   socket.on('rejoin as existing player', function(playerName){
     if (queryName(playerName) !== "disconnected") {
-      if (queryName(playerName) == "active") {
+      if (queryName(playerName) === "active") {
         console.log("A socket attempted to reconnect as "+playerName+", but that player is already connected");
       } else {
         console.log("A socket attempted to reconnect as "+playerName+", but that player does not exist");
@@ -66,15 +68,15 @@ function allocateSocket(socket,playerName) {
     game.broadcastStates();
   });
   socket.on('draw card', function(){
-    var card = game.drawCard(playerName);
+    let card = game.drawCard(playerName);
     socket.emit('you drew card',{playerName:playerName,card:card})
     socket.broadcast.emit('player drew card',{playerName:playerName})
     game.broadcastStates();
   })
   socket.on('give card', function(msg){
-    if (msg.password != password) return;
-    var card = game.drawCard(msg.targetName);
-    var theirSocket = game.findSocketByPlayerName(msg.targetName)
+    if (msg.password !== password) return;
+    let card = game.drawCard(msg.targetName);
+    let theirSocket = game.findSocketByPlayerName(msg.targetName)
     if (theirSocket) {
       theirSocket.emit('you were given card',{playerName:msg.targetName,card:card})
       theirSocket.broadcast.emit('player was given card',{playerName:msg.targetName})
@@ -84,7 +86,7 @@ function allocateSocket(socket,playerName) {
     game.broadcastStates();
   })
   socket.on('play card', function(msg){
-    success = game.playCard(playerName,msg.card);
+    let success = game.playCard(playerName,msg.card);
     if (success) {
       socket.emit('you played card',{playerName:playerName,card:msg.card});
       socket.broadcast.emit('player played card',{playerName:playerName,card:msg.card});
@@ -95,7 +97,7 @@ function allocateSocket(socket,playerName) {
   });
   socket.on('take back card', function(){
     console.log("Player taking back card");
-    card = game.takeBackCard(playerName);
+    let card = game.takeBackCard(playerName);
     if (card !== false) {
       socket.emit('you took back card',{playerName:playerName,card:card})
       socket.broadcast.emit('player took back card',{playerName:playerName,card:card})
@@ -105,10 +107,10 @@ function allocateSocket(socket,playerName) {
     }
   })
   socket.on('give back card', function(msg){
-    if (msg.password != password) return;
+    if (msg.password !== password) return;
     console.log("Player being given back card");
-    card = game.takeBackCard(msg.targetName);
-    var theirSocket = game.findSocketByPlayerName(msg.targetName)
+    let card = game.takeBackCard(msg.targetName);
+    let theirSocket = game.findSocketByPlayerName(msg.targetName)
     if (card !== false) {
       if (theirSocket) {
         theirSocket.emit('you were given back card',{playerName:msg.targetName,card:card})
@@ -122,7 +124,7 @@ function allocateSocket(socket,playerName) {
     }
   })
   socket.on('shuffle deck', function(msg){
-    if (msg.password != password) return;
+    if (msg.password !== password) return;
     game.shuffleDeck();
     console.log("Deck shuffled");
     game.broadcast("deck shuffled")
@@ -132,30 +134,30 @@ function allocateSocket(socket,playerName) {
     game.broadcast('chat message',msg)
   })
   socket.on('move card from deck to discard', function(msg){
-    if (msg.password != password) return;
+    if (msg.password !== password) return;
     if (game.deck.length > 0) {
-      var card = game.deck.pop()
+      let card = game.deck.pop()
       game.discard.push(card)
       game.broadcast("card moved from deck to discard",{card:card})
       game.broadcastStates()
     }
   })
   socket.on('move card from discard to deck', function(msg){
-    if (msg.password != password) return;
+    if (msg.password !== password) return;
     if (game.discard.length > 0) {
-      var card = game.discard.pop()
+      let card = game.discard.pop()
       game.deck.push(card)
       game.broadcast("card moved from discard to deck",{card:card})
       game.broadcastStates()
     }
   })
   socket.on('remove player', function(msg){
-    if (msg.password != password) return;
-    player = game.players[msg.targetName];
+    if (msg.password !== password) return;
+    let player = game.players[msg.targetName];
     if (player.connected) {
       player.socket.disconnect();
     }
-    for (card of player.hand) {
+    for (let card of player.hand) {
       game.deck.push(card);
       game.shuffleDeck();
     }
@@ -164,22 +166,26 @@ function allocateSocket(socket,playerName) {
     game.broadcastStates();
   });
   socket.on('start new game',function (msg){
-    if (msg.password != password) return;
+    if (msg.password !== password) return;
     game.broadcast('game ended')
     for (playerName in game.players) {
-      game.players[playerName].socket.disconnect();
-      delete game.players[playerName].socket; // IDK if this is necessary, but it's good to collect your garbage
-      delete game.players[playerName];
-      console.log("deleting "+playerName);
+      if (game.players.hasOwnProperty(playerName)) {
+        game.players[playerName].socket.disconnect();
+        delete game.players[playerName].socket; // IDK if this is necessary, but it's good to collect your garbage
+        delete game.players[playerName];
+        console.log("deleting "+playerName);
+      } else {
+        // TODO: Error Condition
+      }
     }
     game = newGame(msg);
   })
 }
 
 function queryName(playerName) {
-  for (usedName in game.players) {
-    if (usedName == playerName) {
-      if (game.players[playerName].connected == true) return "active";
+  for (let usedName in game.players) {
+    if (usedName === playerName) {
+      if (game.players[playerName].connected === true) return "active";
       else return "disconnected";
     }
   }
@@ -191,9 +197,9 @@ http.listen(server_port, function(){
 });
 
 
-var cardList = []
-for (var number of ["A","2","3","4","5","6","7","8","9","X","J","Q","K"]) {
-  for (var suit of ["H","C","D","S"]) {
+let cardList = []
+for (let number of ["A","2","3","4","5","6","7","8","9","X","J","Q","K"]) {
+  for (let suit of ["H","C","D","S"]) {
     cardList.push(number+suit);
   }
 }
@@ -211,16 +217,16 @@ const emptyGame = {
       hand: [],
       connected: false,
     };
-    for (var i=0; i < this.parameters.numStartingCards; i++) {
+    for (let i=0; i < this.parameters.numStartingCards; i++) {
       this.drawCard(playerName);
     }
   },
   drawCard: function(playerName) {
-    var card
-    if (this.parameters.numDecks == 0) {
+    let card
+    if (this.parameters.numDecks === 0) {
       card = cardList[Math.floor(Math.random()*cardList.length)]
     } else {
-      if (this.deck.length == 0) {
+      if (this.deck.length === 0) {
         if (this.discard.length >= 20) {
           this.deck = this.discard.splice(0,this.discard.length-10);
           this.broadcast('discard shuffled into deck');
@@ -245,17 +251,17 @@ const emptyGame = {
     return card
   },
   takeBackCard: function(playerName) {
-    if (this.discard.length == 0) {
+    if (this.discard.length === 0) {
       return false;
     }
-    card = this.discard.pop();
+    let card = this.discard.pop();
     this.players[playerName].hand.push(card);
     return card;
   },
   playCard: function(playerName,card) {
-    if (this.players[playerName].hand.indexOf(card) != -1) {
+    if (this.players[playerName].hand.indexOf(card) !== -1) {
       console.log(playerName+" played "+card);
-      var index = this.players[playerName].hand.indexOf(card);
+      let index = this.players[playerName].hand.indexOf(card);
       this.players[playerName].hand.splice(index,1)
       this.discard.push(card);
       return true
@@ -273,19 +279,19 @@ const emptyGame = {
     io.emit(message,...args)
   },
   broadcastStates: function() {
-    var state = {
+    let state = {
       players: {},
       deckSize: this.deck.length,
       discard: this.discard,
     }
-    for (var otherPlayerName in this.players) {
+    for (let otherPlayerName in this.players) {
       state.players[otherPlayerName] = {
         playerName: otherPlayerName,
         connected: this.players[otherPlayerName].connected,
         handSize: this.players[otherPlayerName].hand.length,
       }
     }
-    for (var playerName in this.players) {
+    for (let playerName in this.players) {
       if (this.players[playerName].connected) {
         state.hand = this.players[playerName].hand;
         state.playerName = playerName;
@@ -306,17 +312,17 @@ const emptyGame = {
 function newGame(params) {
   game = Object.create(emptyGame)
   if (params) {
-    game.parameters.maxSize = (params.maxSize === undefined) ? 8 : params.maxSize,
+    game.parameters.maxSize = (params.maxSize === undefined) ? 8 : params.maxSize
     game.parameters.numDecks = (params.numDecks === undefined) ? 2 : params.numDecks
     game.parameters.numStartingCards = (params.numStartingCards === undefined) ? 5 : params.numStartingCards
   }
 
   if (params.players !== undefined) {
-    for (var playerObject of params.players) {
+    for (let playerObject of params.players) {
       game.addPlayer(playerObject);
     }
   }
-  if (game.parameters.numDecks != 0) {
+  if (game.parameters.numDecks !== 0) {
     game.deck = repeatArray(cardList,game.parameters.numDecks)
     game.shuffleDeck()
   }
@@ -327,12 +333,12 @@ function newGame(params) {
 }
 // Helper functions
 function repeatArray(arr, count) {
-  var ln = arr.length;
-  var b = new Array(ln*count);
-  for(var i=0; i<ln*count; i++) {
+  let ln = arr.length;
+  let b = new Array(ln*count);
+  for(let i=0; i<ln*count; i++) {
     b[i] = (arr[i%ln]);
   }
   return b;
 }
 
-var game = newGame({numDecks:1})
+game = newGame({numDecks:1})
