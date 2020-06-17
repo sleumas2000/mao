@@ -399,7 +399,9 @@ jQuery(function(){
     topCard.remove()
     topCard.on("click", takeBackCard)
   }
-
+  function takeBackCard() {
+    socket.emit("take back card");
+  }
   function changePlayerHandSize(playerName,increment) {
     let count = $("#players-list li").length;
     for (let i = 0; i < count; i++) {

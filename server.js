@@ -2,6 +2,7 @@ const server_port = process.env.OPENSHIFT_NODEJS_PORT || 8080
 const server_ip_address = process.env.OPENSHIFT_NODEJS_IP || 'localhost'
 const game_title = process.env.GAME_TITLE || 'Online Mao'
 const password = process.env.PASSWORD || ""
+const defaultNumStartingCards = parseInt(process.env.NUM_STARTING_CARDS) || 5
 
 const express = require('express');
 const app = express();
@@ -315,7 +316,7 @@ function newGame(params) {
   if (params) {
     game.parameters.maxSize = (params.maxSize === undefined) ? 8 : params.maxSize
     game.parameters.numDecks = (params.numDecks === undefined) ? 2 : params.numDecks
-    game.parameters.numStartingCards = (params.numStartingCards === undefined) ? 5 : params.numStartingCards
+    game.parameters.numStartingCards = (params.numStartingCards === undefined) ? defaultNumStartingCards : params.numStartingCards
   }
 
   if (params.players !== undefined) {
