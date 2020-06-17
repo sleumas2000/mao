@@ -378,8 +378,12 @@ jQuery(function(){
   }
   socket.on("player joined",playerJoined)
   function playerJoined(msg) {
-    $("#shade").addClass("hidden");
     logEvent(msg.playerName+" joined the game")
+  }
+  socket.on("you joined",youJoined)
+  function youJoined(msg) {
+    $("#shade").addClass("hidden");
+    logEvent("You joined the game as "+msg.playerName)
   }
   socket.on("player disconnected",playerDisconnected)
   function playerDisconnected(msg) {
