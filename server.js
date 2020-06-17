@@ -3,6 +3,10 @@ const server_ip_address = process.env.OPENSHIFT_NODEJS_IP || 'localhost'
 const game_title = process.env.GAME_TITLE || 'Online Mao'
 const password = process.env.PASSWORD || ""
 const defaultNumStartingCards = parseInt(process.env.NUM_STARTING_CARDS) || 5
+console.log("Environment Variables")
+console.log("Num Starting Cards: "+defaultNumStartingCards)
+console.log("Title: "+game_title)
+console.log("Password: "+password)
 
 const express = require('express');
 const app = express();
