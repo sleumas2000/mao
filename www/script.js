@@ -5,6 +5,7 @@ let game = {}
 jQuery(function(){
 
   const admin = new URLSearchParams(window.location.search).has('admin');
+  const password = "";
   if (admin) {
     const password = new URLSearchParams(window.location.search).get('admin');
     console.log("Showing admin buttons");
@@ -396,8 +397,9 @@ jQuery(function(){
   }
   function removeTopCard() {
     let topCard = $('#discard-area div.card:last-child');
-    topCard.remove()
-    topCard.on("click", takeBackCard)
+    let nextCard = $('#discard-area div.card:nth-last-child(2)');
+    topCard.remove();
+    nextCard.on("click", takeBackCard)
   }
   function takeBackCard() {
     socket.emit("take back card");
