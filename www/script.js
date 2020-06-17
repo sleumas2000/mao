@@ -5,9 +5,9 @@ let game = {}
 jQuery(function(){
 
   const admin = new URLSearchParams(window.location.search).has('admin');
-  const password = "";
+  let password = "";
   if (admin) {
-    const password = new URLSearchParams(window.location.search).get('admin');
+    password = new URLSearchParams(window.location.search).get('admin');
     console.log("Showing admin buttons");
     $("#new-game-button-container").removeClass("hidden");
     $("#new-game-submit-button").on("click",newGame);
