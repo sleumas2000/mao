@@ -1,5 +1,4 @@
-const server_port = process.env.OPENSHIFT_NODEJS_PORT || 8080
-const server_ip_address = process.env.OPENSHIFT_NODEJS_IP || 'localhost'
+const server_port = process.env.PORT || 80
 const game_title = process.env.GAME_TITLE || 'Online Mao'
 const password = process.env.PASSWORD || ""
 const defaultNumStartingCards = (process.env.NUM_STARTING_CARDS === undefined) ? 5 : parseInt(process.env.NUM_STARTING_CARDS)
