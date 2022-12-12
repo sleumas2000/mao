@@ -4,7 +4,7 @@
   "description": "Getting a basic card game simulator working",
   "dependencies": {
     "bufferutil": "^4.0.1",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "socket.io": "^2.5.0",
     "utf-8-validate": "^5.0.2"
   },
